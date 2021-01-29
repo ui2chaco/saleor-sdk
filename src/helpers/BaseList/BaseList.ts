@@ -5,6 +5,7 @@ import {
   MapQueryData,
   BaseListVariables,
   GetPageInfo,
+  GetTotalCount,
 } from "./types";
 
 abstract class BaseList<TQuery, TObject, TVariables extends BaseListVariables> {
@@ -31,7 +32,6 @@ abstract class BaseList<TQuery, TObject, TVariables extends BaseListVariables> {
   /**
    * Status of the current query
    */
-
   public get loading(): boolean {
     return this.current !== null;
   }
@@ -43,6 +43,11 @@ abstract class BaseList<TQuery, TObject, TVariables extends BaseListVariables> {
   pageInfo: PageInfo | undefined = undefined;
 
   /**
+   * A total count of items in the collection.
+   */
+  totalCount: number = 0;
+
+  /**
    * Method called to get objects from API
    */
   abstract query: GetBaseList<TQuery, TVariables>;
@@ -51,6 +56,11 @@ abstract class BaseList<TQuery, TObject, TVariables extends BaseListVariables> {
    * Function getting PageInfo object from query result
    */
   abstract getPageInfo: GetPageInfo<TQuery>;
+
+  /**
+   * Function getting PageInfo object from query result
+   */
+  abstract getTotalCount: GetTotalCount<TQuery>;
 
   /**
    * Function mapping query data to list of objects
@@ -77,6 +87,7 @@ abstract class BaseList<TQuery, TObject, TVariables extends BaseListVariables> {
     this.current = null;
     this.data = this.mapQueryData(result.data);
     this.pageInfo = this.getPageInfo(result);
+    this.totalCount = this.getTotalCount(result);
   };
 
   /**
@@ -99,6 +110,7 @@ abstract class BaseList<TQuery, TObject, TVariables extends BaseListVariables> {
       this.current = null;
       this.data = [...this.data, ...(this.mapQueryData(result.data) || [])];
       this.pageInfo = this.getPageInfo(result);
+      this.totalCount = this.getTotalCount(result);
 
       return this!.data;
     }

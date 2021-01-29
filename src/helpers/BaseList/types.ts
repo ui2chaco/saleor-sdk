@@ -17,3 +17,7 @@ export interface BaseListVariables {
 export type GetPageInfo<TQuery> = (
   result: ApolloQueryResult<TQuery>
 ) => PageInfo;
+
+export type GetTotalCount<TQuery> = (
+  result: ApolloQueryResult<TQuery>
+) => number;
