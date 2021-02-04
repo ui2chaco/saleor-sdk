@@ -20,6 +20,7 @@
     "prepare": "npm run clean && npm run build",
     "release": "np",
     "start": "tsc --watch",
+    "version":"npm run clean && npm run build && npm run create-package",
     "test": "jest"
   },
   "keywords": [
