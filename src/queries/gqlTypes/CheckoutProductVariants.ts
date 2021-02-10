@@ -218,6 +218,75 @@ export interface CheckoutProductVariants_productVariants {
   edges: CheckoutProductVariants_productVariants_edges[];
 }
 
+export interface Product_productvariant_edges_node_product_productType_attributeVariant_attribute_values_relay {
+  __typename: "ProductAttribute";
+
+  id: string;
+  name: string;
+}
+
+export interface Product_productvariant_edges_node_product_productType_attributeVariant_attribute_relay {
+  __typename: "ProductAttribute";
+
+  id: string;
+  name: string;
+  product_attributevalues: Product_productvariant_edges_node_product_productType_attributeVariant_attribute_values_relay
+}
+
+export interface Product_productvariant_edges_node_product_productType_attributeVariant_relay {
+  __typename: "ProductAttributeVariant";
+
+  product_attribute: Product_productvariant_edges_node_product_productType_attributeVariant_attribute_relay
+}
+
+export interface Product_productvariant_edges_node_product_productType_relay {
+  __typename: "ProductType";
+
+  id: string;
+  is_shipping_required: boolean;
+  product_attributevariants: Product_productvariant_edges_node_product_productType_attributeVariant_relay[];
+}
+
+export interface Product_productvariant_edges_node_product_image_relay {
+  __typename: "ProductImage";
+
+  id: string;
+  image: string;
+  alt: string;
+}
+
+export interface Product_productvariant_edges_node_product_relay {
+  __typename: "Product";
+
+  id: string;
+  name: string;
+  product_producttype: Product_productvariant_edges_node_product_productType_relay;
+  product_productimages: Product_productvariant_edges_node_product_image_relay[];
+}
+
+export interface Product_productvariantn_edges_node_relay {
+  __typename: "ProductVariant";
+
+  id: string;
+  name: string;
+  price_amount: number;
+  sku: string;
+  track_inventory: boolean;
+  currency: string;
+  product_product: Product_productvariant_edges_node_product_relay;
+}
+
+export interface Product_productvariant_edges_relay {
+  __typename: "ProductVariantCountableEdge";
+
+  node: Product_productvariantn_edges_node_relay;
+}
+
+export interface Product_productvariant_relay {
+  __typename: "ProductVariantCountableConnection";
+  edges: Product_productvariant_edges_relay[];
+}
+
 export interface CheckoutProductVariants {
   /**
    * List of product variants.

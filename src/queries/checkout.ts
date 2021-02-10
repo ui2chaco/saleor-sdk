@@ -35,3 +35,43 @@ export const checkoutProductVariants = gql`
     }
   }
 `;
+
+export const checkoutProductVariantsRelay = gql`
+  query addCartList($variantId: Int) {
+    product_productvariant_connection(where: { id: { _eq: $variantId } }) {
+      edges {
+        node {
+          id
+          name
+          price_amount
+          sku
+          track_inventory
+          currency
+          product_product {
+            id
+            name
+            product_producttype {
+              id
+              is_shipping_required
+              product_attributevariants {
+                product_attribute {
+                  id
+                  name
+                  product_attributevalues {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+            product_productimages {
+              id
+              image
+              alt
+            }
+          }
+        }
+      }
+    }
+  }
+`;
