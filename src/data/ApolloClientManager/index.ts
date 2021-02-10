@@ -475,28 +475,35 @@ export class ApolloClientManager {
   getRefreshedCheckoutLinesRelay = async (
     checkoutlines: ICheckoutModelLine[] | null
   ) => {
-    console.log(
-      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura checkoutlines : ${JSON.stringify(
-        checkoutlines
-      )}`
-    );
+    console.info("### getRefreshedCheckoutLinesRelay ");
     const idsOfMissingVariants = checkoutlines
       ?.filter(line => !line.variant || !line.totalPrice)
       .map(line => decoderOfRelayId(line.variant.id));
-    console.log(
-      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura idsOfMissingVariants : ${JSON.stringify(
+
+    console.info(
+      `### getRefreshedCheckoutLinesRelay idsOfMissingVariants :${idsOfMissingVariants}`
+    );
+    console.info(
+      `### getRefreshedCheckoutLinesRelay idsOfMissingVariants :${JSON.stringify(
         idsOfMissingVariants
       )}`
     );
+
     const linesWithProperVariant =
       checkoutlines?.filter(line => line.variant && line.totalPrice) || [];
+
+    console.info(
+      `### getRefreshedCheckoutLinesRelay linesWithProperVariant :${linesWithProperVariant}`
+    );
+    console.info(
+      `### getRefreshedCheckoutLinesRelay linesWithProperVariant :${JSON.stringify(
+        linesWithProperVariant
+      )}`
+    );
 
     let variants: Product_productvariant_relay | null | undefined;
     if (idsOfMissingVariants && idsOfMissingVariants.length) {
       try {
-        console.log(
-          "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura if "
-        );
         const observable = this.client.watchQuery({
           query: CheckoutQueries.checkoutProductVariantsRelay,
           variables: {
@@ -508,16 +515,7 @@ export class ApolloClientManager {
           observable.subscribe(
             result => {
               const { data, errors } = result;
-              console.log(
-                `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura if data : ${JSON.stringify(
-                  data
-                )}`
-              );
-              console.log(
-                `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura if errors : ${JSON.stringify(
-                  errors
-                )}`
-              );
+
               if (errors?.length) {
                 reject(errors);
               } else {
@@ -535,10 +533,10 @@ export class ApolloClientManager {
         };
       }
     }
-    console.log(
-      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura  variants : ${JSON.stringify(
-        variants
-      )}`
+
+    console.info(`### getRefreshedCheckoutLinesRelay variants :${variants}`);
+    console.info(
+      `### getRefreshedCheckoutLinesRelay variants :${JSON.stringify(variants)}`
     );
 
     const linesWithMissingVariantUpdated = variants
@@ -645,12 +643,15 @@ export class ApolloClientManager {
           };
         })
       : [];
-    console.log(
-      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura  linesWithMissingVariantUpdated : ${JSON.stringify(
+
+    console.info(
+      `### getRefreshedCheckoutLinesRelay linesWithMissingVariantUpdated :${linesWithMissingVariantUpdated}`
+    );
+    console.info(
+      `### getRefreshedCheckoutLinesRelay linesWithMissingVariantUpdated :${JSON.stringify(
         linesWithMissingVariantUpdated
       )}`
     );
-
     const linesWithProperVariantUpdated = linesWithProperVariant.map(line => {
       const variantPricing = line.variant.pricing?.price;
       const totalPrice = variantPricing
@@ -673,11 +674,6 @@ export class ApolloClientManager {
         variant: line.variant,
       };
     });
-    console.log(
-      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura  linesWithProperVariantUpdated : ${JSON.stringify(
-        linesWithProperVariantUpdated
-      )}`
-    );
 
     return {
       data: [

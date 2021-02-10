@@ -120,18 +120,22 @@ export class SaleorCartAPI extends ErrorListener {
     };
   };
 
-  addItemHasura = async (variantId: string, quantity: number) => {
+  addItemRelay = async (variantId: string, quantity: number) => {
+    console.info("### addItemRelay ");
     // 1. save in local storage
     this.localStorageManager.addItemToCartRelay(variantId, quantity);
 
     // 2. save online if possible (if checkout id available)
     if (this.saleorState.checkout?.lines) {
+      console.info("### addItemRelay if");
       const {
         data,
         error,
       } = await this.apolloClientManager.getRefreshedCheckoutLinesRelay(
         this.saleorState.checkout.lines
       );
+      console.info(`### addItemRelay if data : ${data}`);
+      console.info(`### addItemRelay if data : ${JSON.stringify(data)}`);
 
       if (error) {
         this.fireError(error, ErrorCartTypes.SET_CART_ITEM);
