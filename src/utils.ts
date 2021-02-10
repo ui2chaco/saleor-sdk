@@ -1,3 +1,4 @@
+import { decode } from "base-64";
 import { MapFn, QueryShape, WatchMapFn } from "./types";
 
 // errors are nested in data as it currently stands in the API
@@ -61,3 +62,14 @@ export function findValueInEnum<TEnum extends object>(
 
   return (needle as unknown) as TEnum[keyof TEnum];
 }
+export const decoderOfRelayId = (graphqlId: string) => {
+  const regexBase64 = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+  if (regexBase64.test(graphqlId)) {
+    const rawId = decode(graphqlId);
+    /* eslint-disable no-eval */
+    const relayIdArray = eval(rawId);
+    const resultId = relayIdArray[3];
+    return parseInt(resultId, 10);
+  }
+  return null;
+};

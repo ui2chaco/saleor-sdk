@@ -78,6 +78,7 @@ import { CheckoutDetails } from "../../queries/gqlTypes/CheckoutDetails";
 import {
   CheckoutProductVariants,
   CheckoutProductVariants_productVariants,
+  Product_productvariant_relay,
 } from "../../queries/gqlTypes/CheckoutProductVariants";
 import {
   UserCheckoutTokenList,
@@ -85,7 +86,7 @@ import {
 } from "../../queries/gqlTypes/UserCheckoutTokenList";
 import { UserDetails } from "../../queries/gqlTypes/UserDetails";
 import * as UserQueries from "../../queries/user";
-import { filterNotEmptyArrayItems } from "../../utils";
+import { filterNotEmptyArrayItems, decoderOfRelayId } from "../../utils";
 import {
   CreatePaymentInput,
   CompleteCheckoutInput,
@@ -462,6 +463,221 @@ export class ApolloClientManager {
         variant: line.variant,
       };
     });
+
+    return {
+      data: [
+        ...linesWithMissingVariantUpdated,
+        ...linesWithProperVariantUpdated,
+      ],
+    };
+  };
+
+  getRefreshedCheckoutLinesRelay = async (
+    checkoutlines: ICheckoutModelLine[] | null
+  ) => {
+    console.log(
+      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura checkoutlines : ${JSON.stringify(
+        checkoutlines
+      )}`
+    );
+    const idsOfMissingVariants = checkoutlines
+      ?.filter(line => !line.variant || !line.totalPrice)
+      .map(line => decoderOfRelayId(line.variant.id));
+    console.log(
+      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura idsOfMissingVariants : ${JSON.stringify(
+        idsOfMissingVariants
+      )}`
+    );
+    const linesWithProperVariant =
+      checkoutlines?.filter(line => line.variant && line.totalPrice) || [];
+
+    let variants: Product_productvariant_relay | null | undefined;
+    if (idsOfMissingVariants && idsOfMissingVariants.length) {
+      try {
+        console.log(
+          "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura if "
+        );
+        const observable = this.client.watchQuery({
+          query: CheckoutQueries.checkoutProductVariantsRelay,
+          variables: {
+            // channel,
+            ids: idsOfMissingVariants[0],
+          },
+        });
+        variants = await new Promise((resolve, reject) => {
+          observable.subscribe(
+            result => {
+              const { data, errors } = result;
+              console.log(
+                `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura if data : ${JSON.stringify(
+                  data
+                )}`
+              );
+              console.log(
+                `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura if errors : ${JSON.stringify(
+                  errors
+                )}`
+              );
+              if (errors?.length) {
+                reject(errors);
+              } else {
+                resolve(data.product_productvariant_connection.edges);
+              }
+            },
+            error => {
+              reject(error);
+            }
+          );
+        });
+      } catch (error) {
+        return {
+          error,
+        };
+      }
+    }
+    console.log(
+      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura  variants : ${JSON.stringify(
+        variants
+      )}`
+    );
+
+    const linesWithMissingVariantUpdated = variants
+      ? variants.edges.map(edge => {
+          const existingLine = checkoutlines?.find(
+            line => line.variant.id === edge.node.id
+          );
+          // const variantPricing = edge.node.pricing?.price;
+          // const totalPrice = variantPricing
+          //   ? {
+          //       gross: {
+          //         ...variantPricing.gross,
+          //         amount:
+          //           variantPricing.gross.amount * (existingLine?.quantity || 0),
+          //       },
+          //       net: {
+          //         ...variantPricing.net,
+          //         amount:
+          //           variantPricing.net.amount * (existingLine?.quantity || 0),
+          //       },
+          //     }
+          //   : null;
+
+          return {
+            quantity:
+              (existingLine === null || existingLine === undefined
+                ? undefined
+                : existingLine.quantity) || 0,
+            totalPrice: {
+              gross: {
+                amount:
+                  edge.node.price_amount *
+                  ((existingLine === null || existingLine === undefined
+                    ? undefined
+                    : existingLine.quantity) || 0),
+                currency: edge.node.currency,
+              },
+              net: {
+                amount:
+                  edge.node.price_amount *
+                  ((existingLine === null || existingLine === undefined
+                    ? undefined
+                    : existingLine.quantity) || 0),
+                currency: edge.node.currency,
+              },
+            },
+            variant: {
+              attributes: [],
+              id: edge.node.id,
+              isAvailable: true,
+              name: edge.node.product_product.name,
+              pricing: {
+                onSale: true,
+                price: {
+                  gross: {
+                    amount: edge.node.price_amount || 0,
+                    currency: edge.node.currency,
+                  },
+                  net: {
+                    amount: edge.node.price_amount || 0,
+                    currency: edge.node.currency,
+                  },
+                },
+                priceUndiscounted: {
+                  gross: {
+                    amount: edge.node.price_amount || 0,
+                    currency: edge.node.currency,
+                  },
+                  net: {
+                    amount: edge.node.price_amount || 0,
+                    currency: edge.node.currency,
+                  },
+                },
+              },
+              product: {
+                id: edge.node.product_product.id,
+                name: edge.node.product_product.name,
+                productType: {
+                  id: edge.node.product_product.product_producttype.id,
+                  isShippingRequired:
+                    edge.node.product_product.product_producttype
+                      .is_shipping_required,
+                },
+                thumbnail: {
+                  alt: edge.node.product_product.product_productimages[0].alt,
+                  url: `http://localhost:3001/media/__sized__/${
+                    edge.node.product_product.product_productimages[0].image.split(
+                      "."
+                    )[0]
+                  }-thumbnail-255x255.png`,
+                },
+                thumbnail2x: {
+                  alt: edge.node.product_product.product_productimages[0].alt,
+                  url: `http://localhost:3001/media/__sized__/${
+                    edge.node.product_product.product_productimages[0].image.split(
+                      "."
+                    )[0]
+                  }-thumbnail-510x510.png`,
+                },
+              },
+              quantityAvailable: 50,
+              sku: edge.node.sku,
+            },
+          };
+        })
+      : [];
+    console.log(
+      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura  linesWithMissingVariantUpdated : ${JSON.stringify(
+        linesWithMissingVariantUpdated
+      )}`
+    );
+
+    const linesWithProperVariantUpdated = linesWithProperVariant.map(line => {
+      const variantPricing = line.variant.pricing?.price;
+      const totalPrice = variantPricing
+        ? {
+            gross: {
+              ...variantPricing.gross,
+              amount: variantPricing.gross.amount * line.quantity,
+            },
+            net: {
+              ...variantPricing.net,
+              amount: variantPricing.net.amount * line.quantity,
+            },
+          }
+        : null;
+
+      return {
+        id: line.id,
+        quantity: line.quantity,
+        totalPrice,
+        variant: line.variant,
+      };
+    });
+    console.log(
+      `@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getRefreshedCheckoutLinesHasura  linesWithProperVariantUpdated : ${JSON.stringify(
+        linesWithProperVariantUpdated
+      )}`
+    );
 
     return {
       data: [

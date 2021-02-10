@@ -51,6 +51,42 @@ export class LocalStorageManager {
     return alteredCheckout;
   };
 
+  addItemToCartRelay = (variantId: string, quantity: number) => {
+    const lines = this.saleorState.checkout?.lines || [];
+    let variantInCheckout = lines.find(
+      variant => variant.variant.id === variantId
+    );
+    const alteredLines = lines.filter(
+      variant => variant.variant.id !== variantId
+    );
+    const newVariantQuantity = variantInCheckout
+      ? variantInCheckout.quantity + quantity
+      : quantity;
+    if (variantInCheckout) {
+      variantInCheckout.quantity = newVariantQuantity;
+      alteredLines.push(variantInCheckout);
+    } else {
+      variantInCheckout = {
+        quantity,
+        variant: {
+          id: variantId,
+        },
+      };
+      alteredLines.push(variantInCheckout);
+    }
+    const alteredCheckout = this.saleorState.checkout
+      ? {
+          ...this.saleorState.checkout,
+          lines: alteredLines,
+        }
+      : {
+          lines: alteredLines,
+        };
+    this.handler.setCheckout(alteredCheckout);
+
+    return alteredCheckout;
+  };
+
   removeItemFromCart = (variantId: string) => {
     const lines = this.saleorState.checkout?.lines || [];
     const variantInCheckout = lines.find(
