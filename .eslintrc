@@ -20,7 +20,10 @@
     "import/no-named-as-default": "off",
     "import/prefer-default-export": "off",
     "import/order": "error",
-    "prettier/prettier": ["error"],
+    "prettier/prettier": ["error",{
+      "endOfLine":"auto",
+      "singleQuote": false
+    }],
     "react/jsx-one-expression-per-line": "off",
     "react/jsx-props-no-spreading": "off",
     "react/jsx-wrap-multilines": "off",
